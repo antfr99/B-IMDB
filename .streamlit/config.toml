@@ -1,11 +1,15 @@
+# .streamlit/config.toml
+# Dark "screening room" theme. Setting it here (rather than only in the app's
+# CSS) is what makes Streamlit's own widgets — sliders, dropdowns, dataframes,
+# tooltips — pick up the palette instead of falling back to the red/white
+# defaults and clashing with the page.
 [theme]
-# Base stays "light" on purpose: this is what makes st.dataframe / st.table grids
-# render with a light background + dark text (readable), instead of pure white.
-# Everything else in the app (sidebar, headers, buttons, metrics) is forced dark
-# via the custom CSS injected in imdb_app.py, which sits visually on top of this.
-base = "light"
+base = "dark"
 primaryColor = "#E3A857"
-backgroundColor = "#E4E6EA"
-secondaryBackgroundColor = "#D6D9DE"
-textColor = "#1B2029"
+backgroundColor = "#0F1216"
+secondaryBackgroundColor = "#171C24"
+textColor = "#ECEEF1"
 font = "sans serif"
+
+[server]
+headless = true
