@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 # boxplots, etc.) uses this dark palette instead of matplotlib's white default,
 # so charts match the app's dark theme instead of popping up as white cards. ---
 plt.rcParams.update({
-    "figure.facecolor": "#12151A",
-    "axes.facecolor": "#12151A",
-    "savefig.facecolor": "#12151A",
-    "figure.edgecolor": "#12151A",
+    "figure.facecolor": "#0F1216",
+    "axes.facecolor": "#0F1216",
+    "savefig.facecolor": "#0F1216",
+    "figure.edgecolor": "#0F1216",
     "axes.edgecolor": "#EDEEF0",
     "axes.labelcolor": "#EDEEF0",
     "xtick.color": "#EDEEF0",
@@ -25,6 +25,10 @@ plt.rcParams.update({
     "legend.facecolor": "#1B2029",
     "legend.edgecolor": "#2A2F3A",
     "legend.labelcolor": "#EDEEF0",
+    "font.size": 9,
+    "axes.titlesize": 11,
+    "axes.labelsize": 9,
+    "axes.titleweight": "semibold",
 })
 import numpy as np
 import logging
@@ -37,43 +41,43 @@ from sklearn.neighbors import NearestNeighbors
 # --- Page Config ---
 st.set_page_config(
     layout="wide",
-    page_title="IMDb Data & AI Playground🎬",
+    page_title="IMDb Data & AI Playground",
     page_icon="🎬",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # --- Theme: "Screening Room" (charcoal-navy + marquee gold, ticket-stub motif) ---
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-    --bg: #12151A;
-    --surface: #1B2029;
-    --surface-alt: #171B22;
-    --border: #2A2F3A;
-    --text: #EDEEF0;
-    --text-muted: #8B93A1;
+    --bg: #0F1216;
+    --surface: #171C24;
+    --surface-2: #1E242E;
+    --border: #2B323E;
+    --border-soft: #242A35;
+    --text: #ECEEF1;
+    --text-muted: #949DAC;
     --gold: #E3A857;
+    --gold-soft: rgba(227, 168, 87, 0.13);
     --teal: #4FA88F;
     --brick: #C1524B;
+    --radius: 12px;
 }
 
-html, body, [data-testid="stAppViewContainer"], .main, [data-testid="stHeader"], [data-testid="stBottomBlockContainer"] {
+html, body, [data-testid="stAppViewContainer"], .main,
+[data-testid="stHeader"], [data-testid="stBottomBlockContainer"] {
     background-color: var(--bg) !important;
     color: var(--text) !important;
     font-family: 'Inter', sans-serif;
 }
+[data-testid="stHeader"] { background: transparent !important; }
 
-/* Dataframe / table grids intentionally stay on Streamlit's light theme colors
-   (set in .streamlit/config.toml) for readability - just give them a card frame
-   so they don't look like they're floating loose on the dark background. */
-[data-testid="stDataFrame"], [data-testid="stTable"] {
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    padding: 2px;
-    background-color: #D6D9DE;
+[data-testid="stAppViewContainer"] .block-container {
+    padding-top: 2.1rem;
+    padding-bottom: 4rem;
+    max-width: 1480px;
 }
 
 h1, h2, h3, h4, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
@@ -82,109 +86,318 @@ h1, h2, h3, h4, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
     letter-spacing: -0.01em;
     color: var(--text) !important;
 }
-
 p, span, label, li { color: var(--text); }
 
-/* Hero */
+/* ------------------------------------------------------------------ *
+ * Hero
+ * ------------------------------------------------------------------ */
+.hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.2rem 2rem;
+    margin-bottom: 0.9rem;
+}
+.hero-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
 .hero-title {
     font-family: 'Fraunces', serif;
-    font-size: 2.5rem;
+    font-size: 2.45rem;
+    line-height: 1.05;
     font-weight: 700;
-    margin-bottom: 0.15rem;
+    margin: 0 0 0.35rem 0;
     color: var(--text);
 }
 .hero-subtitle {
-    font-family: 'Inter', sans-serif;
     color: var(--text-muted);
-    font-size: 1.02rem;
-    margin-bottom: 1rem;
+    font-size: 0.98rem;
+    max-width: 72ch;
+    margin: 0;
+}
+.hero-stats { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+.stat {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 3px dashed var(--gold);
+    border-radius: 0 10px 10px 0;
+    padding: 0.5rem 0.85rem;
+    min-width: 96px;
+}
+.stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--text);
+}
+.stat-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
 }
 .hero-rule {
     height: 2px;
     background: repeating-linear-gradient(90deg, var(--gold) 0 10px, transparent 10px 18px);
-    opacity: 0.55;
-    margin: 0 0 1.6rem 0;
+    opacity: 0.5;
+    margin: 0.2rem 0 0.6rem 0;
     border: none;
 }
 
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: var(--surface-alt);
-    border-right: 1px solid var(--border);
+/* ------------------------------------------------------------------ *
+ * Tab-bar navigation (radio widgets restyled as tabs / chips)
+ * Radios are used under the hood on purpose: st.tabs renders *every*
+ * tab's body on every rerun, which here would mean training models and
+ * calling OMDb for all 20 scenarios on each page load.
+ * ------------------------------------------------------------------ */
+div[role="radiogroup"] {
+    gap: 0.1rem !important;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+    padding: 0;
 }
-[data-testid="stSidebar"] * { color: var(--text) !important; }
-.nav-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.15rem;
-    color: var(--gold) !important;
-    margin: 0.2rem 0 0.7rem 0;
+/* Hide the radio dot, keep the text. Targets whatever sits immediately before
+   the label text, so it works across Streamlit's different radio internals. */
+div[role="radiogroup"] div:has(+ div[data-testid="stMarkdownContainer"]) { display: none !important; }
+div[role="radiogroup"] input[type="radio"] { display: none !important; }
+
+div[role="radiogroup"] > label {
+    margin: 0 !important;
+    padding: 0.5rem 0.95rem;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
-.nav-caption {
+div[role="radiogroup"] > label p {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--text-muted) !important;
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
+    margin: 0 !important;
+    white-space: nowrap;
 }
-.nav-divider {
-    border: none;
-    border-top: 1px dashed var(--border);
-    margin: 1rem 0;
+div[role="radiogroup"] > label:hover { background: rgba(255,255,255,0.035); }
+div[role="radiogroup"] > label:hover p { color: var(--text) !important; }
+div[role="radiogroup"] > label[data-selected="true"],
+div[role="radiogroup"] > label:has(input:checked) {
+    border-bottom-color: var(--gold);
+    background: linear-gradient(180deg, var(--gold-soft), transparent);
 }
-[data-testid="stSidebar"] [role="radiogroup"] label {
-    padding: 0.15rem 0;
+div[role="radiogroup"] > label[data-selected="true"] p,
+div[role="radiogroup"] > label:has(input:checked) p {
+    color: var(--gold) !important;
+    font-weight: 600;
 }
 
-/* Metrics styled as ticket stubs */
-[data-testid="stMetric"] {
+/* second level: pill chips instead of underlined tabs */
+.st-key-nav_feature div[role="radiogroup"] {
+    border-bottom: none;
+    gap: 0.35rem !important;
+    padding-top: 0.65rem;
+}
+.st-key-nav_feature div[role="radiogroup"] > label {
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
     background: var(--surface);
+    padding: 0.3rem 0.85rem;
+}
+.st-key-nav_feature div[role="radiogroup"] > label p { font-size: 0.82rem; }
+.st-key-nav_feature div[role="radiogroup"] > label[data-selected="true"],
+.st-key-nav_feature div[role="radiogroup"] > label:has(input:checked) {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+}
+
+/* ------------------------------------------------------------------ *
+ * Scenario headers
+ * ------------------------------------------------------------------ */
+.sc-head { margin: 1.1rem 0 0 0; }
+.sc-eyebrow {
+    display: inline-block;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--gold);
+    background: var(--gold-soft);
+    border: 1px solid rgba(227,168,87,0.28);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    margin-bottom: 0.5rem;
+}
+.sc-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.72rem;
+    font-weight: 600;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+}
+.sc-divider {
+    height: 1px;
+    background: var(--border);
+    border: none;
+    margin: 0.7rem 0 0.1rem 0;
+}
+/* the blurb that follows a scenario header */
+[data-testid="stElementContainer"]:has(.sc-head) + [data-testid="stElementContainer"] p,
+[data-testid="stElementContainer"]:has(.sc-head) + [data-testid="stElementContainer"] li {
+    color: var(--text-muted) !important;
+    font-size: 0.93rem;
+}
+
+.section-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 1.4rem 0 0.5rem 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * Widgets
+ * ------------------------------------------------------------------ */
+
+/* Table grids follow the dark theme set in .streamlit/config.toml — they just
+   get a card frame here so they don't float loose on the page background. */
+[data-testid="stDataFrame"], [data-testid="stTable"] {
+    border-radius: 10px;
+    overflow: hidden;
     border: 1px solid var(--border);
+    background-color: var(--surface);
+}
+
+[data-testid="stMetric"] {
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
     border-left: 3px dashed var(--gold);
     border-radius: 0 10px 10px 0;
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 1rem;
 }
-[data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
+[data-testid="stMetricLabel"] p {
+    color: var(--text-muted) !important;
+    font-size: 0.74rem !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
 [data-testid="stMetricValue"] { color: var(--text) !important; font-family: 'Fraunces', serif; }
 
-/* Buttons */
 .stButton > button {
     background-color: var(--gold);
     color: #1B140A;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
-    padding: 0.5rem 1.1rem;
-    transition: filter 0.15s ease;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem;
+    transition: filter 0.15s ease, transform 0.15s ease;
 }
-.stButton > button:hover { filter: brightness(1.08); color: #1B140A; }
+.stButton > button p, .stButton > button div, .stButton > button span {
+    color: #1B140A !important;
+    font-weight: 600;
+}
+.stButton > button:hover { filter: brightness(1.08); color: #1B140A; transform: translateY(-1px); }
+.stButton > button:focus:not(:active) { color: #1B140A; }
 
-/* Inputs */
-.stTextArea textarea, .stTextInput input, .stSelectbox div[data-baseweb="select"] > div, .stMultiSelect div[data-baseweb="select"] > div {
+/* Input surfaces. Two selector families on purpose: the first matches current
+   Streamlit builds (react-aria), the second older baseweb-based ones. */
+[data-testid="stTextInput"] div[role="group"],
+[data-testid="stNumberInput"] div[role="group"],
+[data-testid="stSelectbox"] div[role="group"],
+[data-testid="stMultiSelect"] div[role="group"],
+.stTextArea textarea, .stTextInput input,
+.stSelectbox div[data-baseweb="select"] > div,
+.stMultiSelect div[data-baseweb="select"] > div {
     background-color: var(--surface) !important;
     color: var(--text) !important;
     border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+}
+[data-testid="stSelectbox"] input, [data-testid="stMultiSelect"] input,
+[data-testid="stTextInput"] input {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+.stTextArea textarea {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace !important;
+    font-size: 0.79rem !important;
+    line-height: 1.5 !important;
 }
 
-/* Dataframes & expanders */
-[data-testid="stExpander"] { background-color: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+/* Cards: st.container(border=True), expanders, alerts */
+[data-testid="stExpander"], [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] {
+    background-color: var(--surface);
+    border-radius: var(--radius);
+}
+[data-testid="stExpander"] {
+    border: 1px solid var(--border-soft);
+    overflow: hidden;
+}
+[data-testid="stExpander"] summary:hover p { color: var(--gold) !important; }
+[data-testid="stExpander"] summary p { font-size: 0.88rem; font-weight: 500; }
 
+[data-testid="stAlert"] { border-radius: 10px; border: 1px solid var(--border); }
+[data-testid="stCaptionContainer"] p, .stCaption p { color: var(--text-muted) !important; }
+code { color: var(--gold) !important; background: rgba(227,168,87,0.08) !important; }
 hr { border-color: var(--border); }
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #12161D;
+    border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] * { color: var(--text) !important; }
+.side-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    color: var(--gold) !important;
+    margin: 0.2rem 0 0.6rem 0;
+}
+.side-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    padding: 0.32rem 0;
+    border-bottom: 1px dashed var(--border-soft);
+}
+.side-row span:last-child { color: var(--gold) !important; font-weight: 600; }
+.side-note { color: var(--text-muted) !important; font-size: 0.78rem; line-height: 1.5; }
+
+.app-footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Hero ---
-st.markdown("""
-<div class="hero-title">IMDb Data & AI Playground 🎬</div>
-<div class="hero-subtitle">A personal screening room for browsing, analyzing, and predicting my own movie ratings.</div>
-<hr class="hero-rule">
-""", unsafe_allow_html=True)
-
 # --- Load Excel files ---
+_load_error = None
 try:
     IMDB_Ratings = pd.read_excel("imdbratings.xlsx")
     IMDB_Ratings_2019 = pd.read_excel("imdbratings2019onwards.xlsx")  # New workbook
     My_Ratings = pd.read_excel("myratings.xlsx")
     Votes = pd.read_excel("votes.xlsx")  # Optional votes source
 except Exception as e:
-    st.error(f"Error loading Excel files: {e}")
+    _load_error = str(e)
     IMDB_Ratings = pd.DataFrame()
     IMDB_Ratings_2019 = pd.DataFrame()
     My_Ratings = pd.DataFrame()
@@ -221,36 +434,64 @@ if "Num Votes" in IMDB_Ratings.columns:
 if "Num Votes" in My_Ratings.columns:
     My_Ratings = My_Ratings[My_Ratings["Num Votes"] > MIN_VOTES]
 
-# --- Scenarios: grouped, icon-led sidebar navigation ---
+# --- Hero: title on the left, headline numbers from the loaded data on the right ---
+_n_rated = int(My_Ratings["Your Rating"].notna().sum()) if "Your Rating" in My_Ratings.columns else 0
+_n_catalog = len(IMDB_Ratings)
+_avg_rating = (
+    f"{My_Ratings['Your Rating'].mean():.1f}"
+    if "Your Rating" in My_Ratings.columns and _n_rated else "—"
+)
+
+st.markdown(f"""
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow">A personal screening room</div>
+    <div class="hero-title">IMDb Data &amp; AI Playground 🎬</div>
+    <p class="hero-subtitle">Twenty ways to browse, analyse and predict my own movie ratings —
+    SQL, statistics, machine learning, NLP and a live ratings monitor, all over the same two spreadsheets.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-value">{_n_rated:,}</div><div class="stat-label">Films rated</div></div>
+    <div class="stat"><div class="stat-value">{_avg_rating}</div><div class="stat-label">My average</div></div>
+    <div class="stat"><div class="stat-value">{_n_catalog:,}</div><div class="stat-label">In catalogue</div></div>
+  </div>
+</div>
+<hr class="hero-rule">
+""", unsafe_allow_html=True)
+
+if _load_error:
+    st.error(f"Error loading Excel files: {_load_error}")
+
+# --- Sidebar: reference panel only. Every control now lives next to the
+# scenario it belongs to, so nothing appears or disappears up there
+# depending on which scenario happens to be open. ---
+st.sidebar.markdown('<div class="side-title">🎟️ About this playground</div>', unsafe_allow_html=True)
+st.sidebar.markdown(f"""
+<div class="side-row"><span>Films I've rated</span><span>{_n_rated:,}</span></div>
+<div class="side-row"><span>Titles in catalogue</span><span>{_n_catalog:,}</span></div>
+<div class="side-row"><span>Vote floor</span><span>{MIN_VOTES:,}</span></div>
+""", unsafe_allow_html=True)
+st.sidebar.markdown(
+    '<p class="side-note">Every scenario works off the same filtered dataset: films with more '
+    'than {:,} IMDb votes, so a handful of obscure titles can\'t skew the statistics or the '
+    'model training.</p>'.format(MIN_VOTES),
+    unsafe_allow_html=True,
+)
+st.sidebar.markdown(
+    '<p class="side-note">Sources: my IMDb ratings export, the IMDb catalogue export, and the '
+    'OMDb API for live ratings, plots and posters.</p>',
+    unsafe_allow_html=True,
+)
+
+# --- Scenarios: grouped into a two-level tab bar across the top.
 # NOTE: the underlying option strings are left exactly as before so every
-# `if scenario == "..."` check further down the file keeps working unchanged.
+# `if scenario == "..."` check further down the file keeps working unchanged —
+# only the labels shown on the tabs are shortened. ---
 SCENARIO_CATEGORIES = {
-    "🏠 Dashboard": [
+    "🏠  Dashboard": [
         "0 – Dashboard",
     ],
-    "🔢 All Scenarios (1–20)": [
-        "1 – Highlight Disagreements",
-        "2 – Hybrid Recommendations",
-        "3 – Top Unseen Films by Decade",
-        "4 – Statistical Insights by Genre (Agreement)",
-        "5 – Statistical Insights by Director (t-test)",
-        "6 – Review Analysis (Sentiment, Subjectivity)",
-        "7 – Poster Image Analysis (OMDb API)",
-        "8 – Graph Based Movie Relationships",
-        "9 – Natural-Language Film Q&A Assistant",
-        "10 – Predict My Ratings (ML)",
-        "11 – Model Evaluation (Feature Importance)",
-        "12 – Feature Hypothesis Testing",
-        "13 – Semantic Genre & Recommendations (Deep Learning / NLP)",
-        "14 – Live Ratings Monitor (Scheduled + on-demand)",
-        "15 – Personalized Watchlist Ranker",
-        "16 – Similar Films Finder",
-        "17 – Taste Profile Radar",
-        "18 – Prediction Outlier Detector",
-        "19 – Tonight's Pick Roulette",
-        "20 – Ratings Timeline by Release Decade",
-    ],
-    "🔍 Discover & Browse": [
+    "🔍  Discover": [
         "1 – Highlight Disagreements",
         "2 – Hybrid Recommendations",
         "3 – Top Unseen Films by Decade",
@@ -259,51 +500,103 @@ SCENARIO_CATEGORIES = {
         "16 – Similar Films Finder",
         "19 – Tonight's Pick Roulette",
     ],
-    "📊 Stats & Insights": [
+    "📊  Stats & Insights": [
         "4 – Statistical Insights by Genre (Agreement)",
         "5 – Statistical Insights by Director (t-test)",
         "6 – Review Analysis (Sentiment, Subjectivity)",
         "17 – Taste Profile Radar",
         "20 – Ratings Timeline by Release Decade",
     ],
-    "🤖 ML & Predictions": [
+    "🤖  ML & AI": [
         "10 – Predict My Ratings (ML)",
         "11 – Model Evaluation (Feature Importance)",
         "12 – Feature Hypothesis Testing",
         "13 – Semantic Genre & Recommendations (Deep Learning / NLP)",
         "18 – Prediction Outlier Detector",
     ],
-    "🕸️ Media & Relationships": [
+    "🕸️  Media & Graph": [
         "7 – Poster Image Analysis (OMDb API)",
         "8 – Graph Based Movie Relationships",
     ],
-    "⚙️ Live Monitoring": [
+    "📡  Live Monitor": [
         "14 – Live Ratings Monitor (Scheduled + on-demand)",
     ],
 }
 
-st.sidebar.markdown('<div class="nav-title">🎟️ Browse the Playground</div>', unsafe_allow_html=True)
-st.sidebar.markdown('<div class="nav-caption">Pick a category, then a feature.</div>', unsafe_allow_html=True)
+# Short labels for the second-level chips — the full names are far too long to
+# sit in a row, but the canonical strings above stay untouched.
+SCENARIO_LABELS = {
+    "1 – Highlight Disagreements": "1 · Disagreements",
+    "2 – Hybrid Recommendations": "2 · Recommendations",
+    "3 – Top Unseen Films by Decade": "3 · Unseen by decade",
+    "4 – Statistical Insights by Genre (Agreement)": "4 · Genre agreement",
+    "5 – Statistical Insights by Director (t-test)": "5 · Director t-test",
+    "6 – Review Analysis (Sentiment, Subjectivity)": "6 · Review sentiment",
+    "7 – Poster Image Analysis (OMDb API)": "7 · Poster mood",
+    "8 – Graph Based Movie Relationships": "8 · Relationship graph",
+    "9 – Natural-Language Film Q&A Assistant": "9 · Film Q&A",
+    "10 – Predict My Ratings (ML)": "10 · Predict ratings",
+    "11 – Model Evaluation (Feature Importance)": "11 · Feature importance",
+    "12 – Feature Hypothesis Testing": "12 · Hypothesis testing",
+    "13 – Semantic Genre & Recommendations (Deep Learning / NLP)": "13 · Semantic genre",
+    "14 – Live Ratings Monitor (Scheduled + on-demand)": "14 · Live monitor",
+    "15 – Personalized Watchlist Ranker": "15 · Watchlist ranker",
+    "16 – Similar Films Finder": "16 · Similar films",
+    "17 – Taste Profile Radar": "17 · Taste radar",
+    "18 – Prediction Outlier Detector": "18 · Outliers",
+    "19 – Tonight's Pick Roulette": "19 · Roulette",
+    "20 – Ratings Timeline by Release Decade": "20 · By decade",
+}
 
-category = st.sidebar.radio(
-    "Category",
+category = st.radio(
+    "Section",
     list(SCENARIO_CATEGORIES.keys()),
+    key="nav_category",
+    horizontal=True,
     label_visibility="collapsed",
 )
 
-# The Dashboard category has exactly one entry ("0 – Dashboard"), so showing
-# a second radio with a single option underneath it is just noise — skip
-# straight to that scenario instead. Every other category still gets the
-# normal two-level picker.
-if category == "🏠 Dashboard":
-    scenario = SCENARIO_CATEGORIES[category][0]
+_options = SCENARIO_CATEGORIES[category]
+if len(_options) == 1:
+    # A category with a single entry (the Dashboard) doesn't need a second row.
+    scenario = _options[0]
 else:
-    st.sidebar.markdown("<hr class='nav-divider'>", unsafe_allow_html=True)
-    scenario = st.sidebar.radio(
+    _labels = [SCENARIO_LABELS[s] for s in _options]
+    # Switching category leaves the previous chip selection pointing at an
+    # option that no longer exists — drop it so the first chip is picked.
+    if st.session_state.get("nav_feature") not in _labels:
+        st.session_state.pop("nav_feature", None)
+    _chosen = st.radio(
         "Feature",
-        SCENARIO_CATEGORIES[category],
+        _labels,
+        key="nav_feature",
+        horizontal=True,
         label_visibility="collapsed",
     )
+    scenario = _options[_labels.index(_chosen)]
+
+
+def scenario_header(number, title, blurb=None):
+    """Consistent title block for every scenario: numbered badge, display
+    title, and a thin rule separating the heading from the controls."""
+    eyebrow = f"Scenario {number}" if str(number).isdigit() else str(number)
+    st.markdown(
+        f'<div class="sc-head">'
+        f'<div class="sc-eyebrow">{eyebrow}</div>'
+        f'<div class="sc-title">{title}</div>'
+        f'</div>'
+        f'<hr class="sc-divider">',
+        unsafe_allow_html=True,
+    )
+    if blurb:
+        st.markdown(f'<p style="color:var(--text-muted);font-size:0.93rem;">{blurb}</p>',
+                    unsafe_allow_html=True)
+
+
+def section_label(text):
+    """Small uppercase label used to break a long scenario into sections."""
+    st.markdown(f'<div class="section-label">{text}</div>', unsafe_allow_html=True)
+
 
 # --- Dashboard (start screen): KPI cards, filterable charts, and the raw
 # data tables. It's the first category/scenario in the sidebar, so it's what
@@ -332,8 +625,7 @@ if scenario == "0 – Dashboard":
             # showing the full unfiltered total.
             kpi_placeholder = st.container()
 
-            st.markdown("<hr class='nav-divider'>", unsafe_allow_html=True)
-            st.markdown("### 🎞️ Explore Ratings")
+            section_label("Explore ratings")
             st.caption("Filter your rated films — the KPIs, charts, and tables below update together.")
 
             _all_genres = sorted({
@@ -346,25 +638,28 @@ if scenario == "0 – Dashboard":
             _min_rating = int(_compare["Your Rating"].min())
             _max_rating = int(_compare["Your Rating"].max())
 
-            f1, f2, f3, f4 = st.columns(4)
-            with f1:
-                landing_genres = st.multiselect(
-                    "Filter by genre", _all_genres, default=[], key="landing_genre_filter"
-                )
-            with f2:
-                landing_directors = st.multiselect(
-                    "Filter by director", _all_directors, default=[], key="landing_director_filter"
-                )
-            with f3:
-                landing_year_range = st.slider(
-                    "Release year range", _min_year, _max_year, (_min_year, _max_year),
-                    key="landing_year_filter"
-                )
-            with f4:
-                landing_rating_range = st.slider(
-                    "My rating range", _min_rating, _max_rating, (_min_rating, _max_rating),
-                    key="landing_rating_filter"
-                )
+            with st.container(border=True):
+                f1, f2, f3, f4 = st.columns(4)
+                with f1:
+                    landing_genres = st.multiselect(
+                        "Genre", _all_genres, default=[], key="landing_genre_filter",
+                        placeholder="All genres",
+                    )
+                with f2:
+                    landing_directors = st.multiselect(
+                        "Director", _all_directors, default=[], key="landing_director_filter",
+                        placeholder="All directors",
+                    )
+                with f3:
+                    landing_year_range = st.slider(
+                        "Release year", _min_year, _max_year, (_min_year, _max_year),
+                        key="landing_year_filter"
+                    )
+                with f4:
+                    landing_rating_range = st.slider(
+                        "My rating", _min_rating, _max_rating, (_min_rating, _max_rating),
+                        key="landing_rating_filter"
+                    )
 
             _filtered = _compare.copy()
             _filtered["Year"] = pd.to_numeric(_filtered["Year"], errors="coerce")
@@ -382,21 +677,25 @@ if scenario == "0 – Dashboard":
                 _filtered = _filtered[_filtered["Director"].isin(landing_directors)]
 
             with kpi_placeholder:
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Films Rated", f"{len(_filtered):,}")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Films rated", f"{len(_filtered):,}")
                 if len(_filtered):
                     _kpi_avg = _filtered["Your Rating"].mean()
+                    _kpi_imdb = _filtered["IMDb Rating"].mean()
+                    _kpi_gap = _kpi_avg - _kpi_imdb
                     _kpi_agreement = ((_filtered["Your Rating"] - _filtered["IMDb Rating"]).abs() <= 1).mean() * 100
-                    c2.metric("My Avg Rating", f"{_kpi_avg:.1f}")
-                    c3.metric("Agreement w/ IMDb", f"{_kpi_agreement:.0f}%")
+                    c2.metric("My average", f"{_kpi_avg:.1f}", delta=f"{_kpi_gap:+.1f} vs IMDb")
+                    c3.metric("IMDb average", f"{_kpi_imdb:.1f}")
+                    c4.metric("Within 1 point of IMDb", f"{_kpi_agreement:.0f}%")
                 else:
-                    c2.metric("My Avg Rating", "—")
-                    c3.metric("Agreement w/ IMDb", "—")
+                    c2.metric("My average", "—")
+                    c3.metric("IMDb average", "—")
+                    c4.metric("Within 1 point of IMDb", "—")
 
             if _filtered.empty:
                 st.info("No films match these filters — widen a range or clear a filter.")
             else:
-                st.markdown("**Top 15 Watched Directors by Average Rating**")
+                section_label("Top 15 watched directors, by average rating")
                 _dir_stats = (
                     _filtered.dropna(subset=["Director"]).groupby("Director")["Your Rating"]
                     .agg(["mean", "count"]).reset_index()
@@ -429,11 +728,13 @@ if scenario == "0 – Dashboard":
 
                     _fig, _ax = plt.subplots(figsize=(6.5, 6.5), subplot_kw=dict(polar=True))
                     _ax.plot(_angles_closed, _values_closed, color="#4FA88F", linewidth=2)
-                    _ax.fill(_angles_closed, _values_closed, color="#4FA88F", alpha=0.25)
+                    _ax.fill(_angles_closed, _values_closed, color="#4FA88F", alpha=0.22)
                     _ax.set_xticks(_angles)
-                    _ax.set_xticklabels(_categories, fontsize=7.5)
+                    _ax.set_xticklabels(_categories, fontsize=8)
                     _ax.set_ylim(_lo, _hi)
-                    _ax.tick_params(axis='y', labelsize=6)
+                    _ax.tick_params(axis='y', labelsize=6.5)
+                    _ax.spines['polar'].set_color("#2A2F3A")
+                    _ax.grid(color="#2A2F3A", linewidth=0.7)
 
                     for _angle, _value in zip(_angles, _values):
                         _ax.annotate(
@@ -443,14 +744,22 @@ if scenario == "0 – Dashboard":
 
                     _fig.tight_layout()
 
-                    _chart_col, _ = st.columns([1, 1])
+                    _chart_col, _table_col = st.columns([1.15, 1])
                     with _chart_col:
                         st.pyplot(_fig)
-
-                    st.caption(
-                        f"Axis zoomed to {_lo:.1f}–{_hi:.1f} (not 0–10) — ranked among the 15 directors "
-                        f"you've watched the most (2+ films), ordered by your average rating of them."
-                    )
+                        st.caption(
+                            f"Axis zoomed to {_lo:.1f}–{_hi:.1f} (not 0–10) — ranked among the 15 "
+                            f"directors you've watched the most (2+ films), ordered by your average "
+                            f"rating of them."
+                        )
+                    with _table_col:
+                        st.dataframe(
+                            _dir_stats.rename(
+                                columns={"mean": "Avg rating", "count": "Films watched"}
+                            ).round(2).reset_index(drop=True),
+                            width="stretch", height=430,
+                        )
+                    plt.close(_fig)
 
             # Carry the same genre/director/year filters over to the raw
             # tables below (the rating filter only applies to My Ratings —
@@ -495,7 +804,7 @@ if scenario == "0 – Dashboard":
 
 # --- Scenario 1: SQL Playground ---
 if scenario == "1 – Highlight Disagreements":
-    st.header("1 – Highlight Disagreements")
+    scenario_header("1", "Highlight Disagreements")
     st.write("Movies where my rating differs from IMDb by more than 2 points.")
 
     default_query_1 = """SELECT 
@@ -515,17 +824,17 @@ ORDER BY Rating_Diff DESC, ir.[Num Votes] DESC
 LIMIT 1000;"""
 
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_query = st.text_area("Enter SQL query:", default_query_1, height=500, key="sql1")
+        user_query = st.text_area("Enter SQL query:", default_query_1, height=360, key="sql1")
     if st.button("Run SQL Query – Find my disagreements", key="run_sql1"):
         try:
             result = ps.sqldf(user_query, {"IMDB_Ratings": IMDB_Ratings, "My_Ratings": My_Ratings})
-            st.dataframe(result, width="stretch", height=800)
+            st.dataframe(result, width="stretch", height=560)
         except Exception as e:
             st.error(f"Error in SQL query: {e}")
 
 # --- Scenario 2: SQL Playground ---
 if scenario == "2 – Hybrid Recommendations":
-    st.header("2 – Hybrid Recommendations")
+    scenario_header("2", "Hybrid Recommendations")
     st.write("""
     Recommend movies I haven't seen yet with a bonus point system:  
     - Director I liked before → +1 point  
@@ -552,11 +861,11 @@ ORDER BY Recommendation_Score DESC
 LIMIT 10000;"""
 
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_query = st.text_area("Enter SQL query:", default_query_2, height=500, key="sql2")
+        user_query = st.text_area("Enter SQL query:", default_query_2, height=360, key="sql2")
     if st.button("Run SQL Query – Recommend movies", key="run_sql2"):
         try:
             result = ps.sqldf(user_query, {"IMDB_Ratings": IMDB_Ratings, "My_Ratings": My_Ratings})
-            st.dataframe(result, width="stretch", height=800)
+            st.dataframe(result, width="stretch", height=560)
         except Exception as e:
             st.error(f"Error in SQL query: {e}")
 
@@ -564,7 +873,7 @@ LIMIT 10000;"""
 
 # --- Scenario 3: SQL Playground ---
 if scenario == "3 – Top Unseen Films by Decade":
-    st.header("3 – Top Unseen Films by Decade")
+    scenario_header("3", "Top Unseen Films by Decade")
     st.write("""
     Shows the highest-rated unseen films grouped by decade.  
     Uses Python deduplication and limits results to the top 20 per decade.
@@ -598,13 +907,13 @@ ORDER BY Decade, [IMDb Rating] DESC, [Num Votes] DESC;
 
     # Text area to allow user edits
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_query = st.text_area("Enter SQL query:", default_query_3, height=600, key="sql3")
+        user_query = st.text_area("Enter SQL query:", default_query_3, height=380, key="sql3")
 
     # Run button
     if st.button("Run SQL Query – Top unseen films", key="run_sql3"):
         try:
             result = ps.sqldf(user_query, {"IMDB_Ratings": IMDB_Ratings, "My_Ratings": My_Ratings})
-            st.dataframe(result, width="stretch", height=800)
+            st.dataframe(result, width="stretch", height=560)
         except Exception as e:
             st.error(f"Error in SQL query: {e}")
 
@@ -612,7 +921,7 @@ ORDER BY Decade, [IMDb Rating] DESC, [Num Votes] DESC;
 
 # --- Scenario 9: Python ML ---
 if scenario == "10 – Predict My Ratings (ML)":
-    st.header("10 – Predict My Ratings (ML)")
+    scenario_header("10", "Predict My Ratings (ML)")
     st.write("""
     Predict my ratings for unseen movies using a machine learning model.
 
@@ -667,12 +976,15 @@ predict_df['Predicted Rating'] = model.predict(X_pred)
 predict_df
 '''
 
-    with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_ml_code = st.text_area("Python ML Code (editable)", ml_code, height=1000)
+    section_label("Model options")
+    _o1, _o2 = st.columns(2)
+    with _o1:
+        min_votes = st.slider("Minimum IMDb votes", 0, 500000, 50000, step=5000, key="s10_min_votes")
+    with _o2:
+        top_n = st.slider("Number of top predictions", 5, 50, 30, step=5, key="s10_top_n")
 
-    st.sidebar.header("ML Options")
-    min_votes = st.sidebar.slider("Minimum IMDb Votes", 0, 500000, 50000, step=5000)
-    top_n = st.sidebar.slider("Number of Top Predictions", 5, 50, 30, step=5)
+    with st.expander("🛠️ View / edit the underlying code", expanded=False):
+        user_ml_code = st.text_area("Python ML Code (editable)", ml_code, height=420)
 
     if st.button("Run Python ML Code", key="run_ml"):
         try:
@@ -694,7 +1006,7 @@ predict_df
 
 # --- Scenario 4: Statistical Insights ---
 if scenario == "4 – Statistical Insights by Genre (Agreement)":
-    st.header("4 – Statistical Insights by Genre (Agreement)")
+    scenario_header("4", "Statistical Insights by Genre")
     st.write("""
     This analysis measures how often my ratings align with IMDb ratings **within a tolerance band of ±1 point**.  
     Results are grouped by genre, showing agreements, disagreements, and overall percentages.
@@ -731,7 +1043,7 @@ genre_agreement.sort_values(by='Agreement_%', ascending=False)
 
     # Editable code box
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_stats_code = st.text_area("Python Statistical Code (editable)", stats_code, height=600)
+        user_stats_code = st.text_area("Python Statistical Code (editable)", stats_code, height=380)
 
     if st.button("Run Statistical Analysis", key="run_stats5"):
         try:
@@ -741,7 +1053,7 @@ genre_agreement.sort_values(by='Agreement_%', ascending=False)
 
             # Retrieve dataframe if created
             if "genre_agreement" in local_vars:
-                st.dataframe(local_vars["genre_agreement"], width="stretch", height=500)
+                st.dataframe(local_vars["genre_agreement"], width="stretch", height=460)
             else:
                 st.warning("No output dataframe named 'genre_agreement' was produced. Please check your code.")
 
@@ -753,7 +1065,7 @@ genre_agreement.sort_values(by='Agreement_%', ascending=False)
 
 # --- Scenario 5: Statistical Insights (t-test per Director) ---
 if scenario == "5 – Statistical Insights by Director (t-test)":
-    st.header("5 – Statistical Insights by Director (t-test)")
+    scenario_header("5", "Statistical Insights by Director (t-test)")
     st.write("""
 This analysis compares my ratings with IMDb ratings on a director-by-director basis using a **paired t-test**.  
 The test checks whether the differences between my ratings and IMDb’s are statistically significant for each director.  
@@ -762,8 +1074,11 @@ The test checks whether the differences between my ratings and IMDb’s are stat
 - **p-value**: shows whether the difference is statistically significant or could be due to chance. p < 0.05 (significant) → Unlikely the difference is due to chance. I consistently rate this director higher or lower than IMDb. 
 """)
 
-    # Sidebar slider for minimum movies per director
-    min_movies = st.sidebar.slider("Minimum movies per director for t-test", 2, 10, 5)
+    # Kept next to the scenario it belongs to rather than in the sidebar.
+    section_label("Test options")
+    min_movies = st.slider(
+        "Minimum movies per director for t-test", 2, 10, 5, key="s5_min_movies"
+    )
 
     # Editable t-test code
     ttest_code_director = f'''
@@ -813,7 +1128,7 @@ df_results = df_results.sort_values(by="p_value")
 '''
 
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_ttest_code_director = st.text_area("Python t-test per Director Code (editable)", ttest_code_director, height=650)
+        user_ttest_code_director = st.text_area("Python t-test per Director Code (editable)", ttest_code_director, height=400)
 
     if st.button("Run t-test Analysis", key="run_ttest_director6"):
         try:
@@ -821,7 +1136,7 @@ df_results = df_results.sort_values(by="p_value")
             exec(user_ttest_code_director, {}, local_vars)
 
             if "df_results" in local_vars:
-                st.dataframe(local_vars["df_results"], width="stretch", height=500)
+                st.dataframe(local_vars["df_results"], width="stretch", height=460)
             else:
                 st.warning("No dataframe named 'df_results' was produced. Please check your code.")
 
@@ -839,7 +1154,7 @@ import streamlit as st
 
 
 if scenario == "6 – Review Analysis (Sentiment, Subjectivity)":
-    st.header("6 – Review Analysis (Sentiment, Subjectivity)")
+    scenario_header("6", "Review Analysis — Sentiment &amp; Subjectivity")
 
     # --- Short explanation ---
     st.markdown("""
@@ -945,7 +1260,7 @@ df_reviews['ReviewID'] = df_reviews.index + 1
         user_review_code = st.text_area(
             "Python Review Sentiment Code (editable)",
             review_code,
-            height=700
+            height=420
         )
 
     # --- Run button ---
@@ -957,10 +1272,10 @@ df_reviews['ReviewID'] = df_reviews.index + 1
             if "df_reviews" in local_vars:
                 df_reviews = local_vars["df_reviews"]
 
-                st.subheader("Reviews Overview")
+                section_label("Reviews overview")
                 st.dataframe(df_reviews, width="stretch", height=400)
 
-                st.subheader("Aggregate Insights")
+                section_label("Aggregate insights")
                 st.write(f"**Average sentiment:** {df_reviews['Sentiment'].mean():.3f}")
                 st.write(f"**Average subjectivity:** {df_reviews['Subjectivity'].mean():.3f}")
 
@@ -1010,7 +1325,7 @@ import seaborn as sns
 
 # --- Scenario 11 ---
 if scenario == "11 – Model Evaluation (Feature Importance)":
-    st.header("11 – Model Evaluation: Feature Importance")
+    scenario_header("11", "Model Evaluation — Feature Importance")
 
     st.write("""
     We analyze which features matter most for predicting **my movie ratings** using a Random Forest model.  
@@ -1050,7 +1365,7 @@ agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=Fal
     with st.expander("🛠️ View the underlying code", expanded=False):
         st.text_area(
             "Python code (view only — this box is not wired back into execution)",
-            s11_code_view, height=420, key="s11_code_view",
+            s11_code_view, height=360, key="s11_code_view",
         )
         st.caption("This is a reference copy of the code that actually runs below. Editing this box won't change the output.")
 
@@ -1058,7 +1373,7 @@ agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=Fal
     retrain_clicked = st.button(
         "🔄 Retrain model now" if 'model' in st.session_state else "▶️ Train model now"
     )
-    if 'model' not in st.session_state:
+    if 'model' not in st.session_state and not retrain_clicked:
         st.info("No model trained yet for this session — click the button above to train one on your ratings.")
 
     if retrain_clicked:
@@ -1114,12 +1429,17 @@ agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=Fal
         top_n = 20
         fi_top = fi_df.head(top_n)
 
-        st.subheader(f"Top {top_n} Feature Importances")
-        plt.figure(figsize=(10,6))
-        sns.barplot(x='Importance', y='Feature', data=fi_top, palette='viridis')
-        plt.title("Top Feature Importances")
-        plt.tight_layout()
-        st.pyplot(plt)
+        section_label(f"Top {top_n} individual features")
+        fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
+        sns.barplot(x='Importance', y='Feature', data=fi_top, color="#E3A857", ax=ax_fi)
+        ax_fi.set_title("Top Feature Importances", color="#EDEEF0")
+        ax_fi.grid(axis='x', color="#2A2F3A", linewidth=0.6)
+        ax_fi.set_axisbelow(True)
+        for _s in ("top", "right"):
+            ax_fi.spines[_s].set_visible(False)
+        fig_fi.tight_layout()
+        st.pyplot(fig_fi)
+        plt.close(fig_fi)
 
         # --- Automatic explanation for top Director ---
         director_features = fi_df[fi_df['Feature'].str.startswith('Director')]
@@ -1143,12 +1463,17 @@ agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=Fal
         fi_df['Category'] = fi_df['Feature'].str.split('_').str[0]
         agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=False)
 
-        st.subheader("Feature Importance by Category")
-        plt.figure(figsize=(8, 4))
-        sns.barplot(x=agg_df.values, y=agg_df.index, palette='magma')
-        plt.title("Aggregated Importances")
-        plt.tight_layout()
-        st.pyplot(plt)
+        section_label("Feature importance by category")
+        fig_agg, ax_agg = plt.subplots(figsize=(8, 4))
+        sns.barplot(x=agg_df.values, y=agg_df.index, color="#4FA88F", ax=ax_agg)
+        ax_agg.set_title("Aggregated Importances", color="#EDEEF0")
+        ax_agg.grid(axis='x', color="#2A2F3A", linewidth=0.6)
+        ax_agg.set_axisbelow(True)
+        for _s in ("top", "right"):
+            ax_agg.spines[_s].set_visible(False)
+        fig_agg.tight_layout()
+        st.pyplot(fig_agg)
+        plt.close(fig_agg)
 
         # --- Summary explanation (only shows when model exists) ---
         st.write("""
@@ -1171,7 +1496,7 @@ agg_df = fi_df.groupby('Category')['Importance'].sum().sort_values(ascending=Fal
 
 # --- Scenario 12: Feature Hypothesis Testing ---
 if scenario == "12 – Feature Hypothesis Testing":
-    st.header("12 – Feature Hypothesis Testing & Predictions")
+    scenario_header("12", "Feature Hypothesis Testing &amp; Predictions")
 
     st.markdown("""
     Select features to test if they **improve model predictions** for your ratings.
@@ -1307,16 +1632,16 @@ if scenario == "12 – Feature Hypothesis Testing":
         result = st.session_state['scenario10_result']
 
         # --- Predictions table ---
-        st.write("### Predictions Table (All Unrated Movies)")
+        section_label("Predictions table — all unrated movies")
         if not result['predictions'].empty:
             st.dataframe(result['predictions'])
 
             # --- Statistical significance explanation ---
-            st.write("### Statistical Significance of Improvement")
+            section_label("Statistical significance of the improvement")
             st.info(result['stat_explanation'])
 
             # --- Explanation of predicted rating changes ---
-            st.write("### Why Predicted Ratings Change")
+            section_label("Why predicted ratings change")
             st.markdown(f"""
             The predicted ratings change when you modify the selected features because the model learns patterns from your past ratings.  
 
@@ -1333,16 +1658,29 @@ if scenario == "12 – Feature Hypothesis Testing":
             st.warning("No unseen movies available for prediction.")
 
         # --- Annotated RMSE boxplot ---
-        plt.figure(figsize=(7,4))
         rmse_base_mean = np.mean(result['scores_base'])
         rmse_test_mean = np.mean(result['scores_test'])
-        plt.boxplot([result['scores_base'], result['scores_test']])
-        plt.xticks([1, 2], ['Baseline', 'With Feature(s)'])
-        plt.ylabel("RMSE")
-        plt.title("Cross-Validated RMSE Comparison")
-        plt.text(1, rmse_base_mean + 0.02, f"{rmse_base_mean:.2f}", ha='center', color='blue')
-        plt.text(2, rmse_test_mean + 0.02, f"{rmse_test_mean:.2f}", ha='center', color='green')
-        st.pyplot(plt)
+        fig_rmse, ax_rmse = plt.subplots(figsize=(7, 4))
+        bp = ax_rmse.boxplot(
+            [result['scores_base'], result['scores_test']],
+            patch_artist=True, medianprops=dict(color="#EDEEF0", linewidth=1.4),
+        )
+        for patch, colour in zip(bp['boxes'], ["#8B93A1", "#E3A857"]):
+            patch.set_facecolor(colour)
+            patch.set_alpha(0.35)
+            patch.set_edgecolor(colour)
+        ax_rmse.set_xticks([1, 2], ['Baseline', 'With Feature(s)'])
+        ax_rmse.set_ylabel("RMSE")
+        ax_rmse.set_title("Cross-Validated RMSE Comparison", color="#EDEEF0")
+        ax_rmse.grid(axis='y', color="#2A2F3A", linewidth=0.6)
+        ax_rmse.set_axisbelow(True)
+        for _s in ("top", "right"):
+            ax_rmse.spines[_s].set_visible(False)
+        ax_rmse.text(1, rmse_base_mean + 0.02, f"{rmse_base_mean:.2f}", ha='center', color="#8B93A1")
+        ax_rmse.text(2, rmse_test_mean + 0.02, f"{rmse_test_mean:.2f}", ha='center', color="#E3A857")
+        fig_rmse.tight_layout()
+        st.pyplot(fig_rmse)
+        plt.close(fig_rmse)
 
         # --- RMSE interpretation ---
         st.write("""
@@ -1371,7 +1709,7 @@ if scenario == "12 – Feature Hypothesis Testing":
 
 # --- Scenario 8: Graph-Based Movie Relationships ---
 if scenario == "8 – Graph Based Movie Relationships":
-    st.header("8 – Graph-Based Movie Relationships")
+    scenario_header("8", "Graph-Based Movie Relationships")
     st.write("""
     This scenario models the dataset as a **graph**:
     - **Nodes**: Movies, Directors, Genres  
@@ -1440,19 +1778,20 @@ pos = nx.spring_layout(G, k=0.3, iterations=25)
 color_map = []
 for node, data in G.nodes(data=True):
     if data["type"] == "movie":
-        color_map.append("skyblue")
+        color_map.append("#4FA88F")
     elif data["type"] == "director":
-        color_map.append("lightgreen")
+        color_map.append("#E3A857")
     else:
-        color_map.append("salmon")
+        color_map.append("#C1524B")
 
-nx.draw(G, pos, with_labels=True, node_size=800, node_color=color_map, font_size=8, edge_color="gray", ax=ax)
+nx.draw(G, pos, with_labels=True, node_size=750, node_color=color_map, font_size=8,
+        font_color="#EDEEF0", edge_color="#3A414F", ax=ax)
 st.pyplot(fig)
 st.write(f"Graph built with **{len(G.nodes)} nodes** and **{len(G.edges)} edges**.")
 '''
 
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_graph_code = st.text_area("Python Graph Code (editable)", graph_code, height=600)
+        user_graph_code = st.text_area("Python Graph Code (editable)", graph_code, height=380)
 
     if st.button("Run Graph Analysis", key="run_graph11"):
         try:
@@ -1494,7 +1833,7 @@ This visualization helps you explore the movie dataset’s structure and uncover
 
 # --- Scenario 7 Poster Analysis ---
 if scenario == "7 – Poster Image Analysis (OMDb API)":
-    st.header("7 – Poster Image & Mood Analysis")
+    scenario_header("7", "Poster Image &amp; Mood Analysis")
     st.markdown("""
     Select a movie, then click **Fetch Poster & Analyze** to display the poster, 
     dominant colors, and an easy-to-understand mood analysis.
@@ -1563,7 +1902,7 @@ else:
 
     # --- Editable text area ---
     with st.expander("🛠️ View / edit the underlying code", expanded=False):
-        user_poster_code = st.text_area("Python Poster Analysis Code (editable)", poster_code, height=650)
+        user_poster_code = st.text_area("Python Poster Analysis Code (editable)", poster_code, height=400)
 
     # --- Hidden API key ---
     OMDB_API_KEY = "cbbdb8f8"  # Keep this hidden in production
@@ -1594,7 +1933,7 @@ else:
 
 # --- Scenario 13: Deep Learning Semantic Genre Analysis (Dynamic) ---
 if scenario == "13 – Semantic Genre & Recommendations (Deep Learning / NLP)":
-    st.header("13 – Semantic Genre & Recommendations (Deep Learning / NLP)")
+    scenario_header("13", "Semantic Genre &amp; Recommendations (Deep Learning / NLP)")
     st.markdown("""
     This scenario uses **sentence embeddings** to determine the main genre of films by analyzing the plot.  
     The table shows:
@@ -1695,7 +2034,7 @@ df_results = pd.DataFrame(results)
 
             df_results = pd.DataFrame(results)
             st.success(f"Analysis complete for {selected_director} ✅")
-            st.dataframe(df_results, use_container_width=True)
+            st.dataframe(df_results, width="stretch")
 
             st.markdown("""
             **Explanation:**  
@@ -1709,7 +2048,7 @@ df_results = pd.DataFrame(results)
 
 # --- Scenario 14: Live Ratings Monitor + Supervised ML Predictions (English only) ---
 if scenario == "14 – Live Ratings Monitor (Scheduled + on-demand)":
-    st.header("14 – Live Ratings Monitor (Scheduled + on-demand)")
+    scenario_header("14", "Live Ratings Monitor")
 
     st.markdown("""
 **What this scenario actually does**
@@ -1747,15 +2086,22 @@ this all depends on.
         )
         st.text_input("Your OMDb API key", type="password", key="omdb_manual_key", placeholder="e.g. abcd1234")
 
+    def _secret(name, default=None):
+        """st.secrets raises (rather than returning a default) when there's no
+        secrets.toml at all — which is the normal case when running locally."""
+        try:
+            return st.secrets.get(name, default)
+        except Exception:
+            return default
+
     def _get_omdb_keys():
         keys = []
         manual_key = st.session_state.get("omdb_manual_key", "").strip()
         if manual_key:
             keys.append(manual_key)
-        if hasattr(st, "secrets"):
-            secret_val = st.secrets.get("OMDB_API_KEY")
-            if secret_val:
-                keys.extend([k.strip() for k in str(secret_val).split(",") if k.strip()])
+        secret_val = _secret("OMDB_API_KEY")
+        if secret_val:
+            keys.extend([k.strip() for k in str(secret_val).split(",") if k.strip()])
         keys.append("e9476c0a")  # last-resort shared demo key
         seen, ordered = set(), []
         for k in keys:
@@ -1773,13 +2119,11 @@ this all depends on.
             from supabase import create_client
         except ImportError:
             return None
-        if not hasattr(st, "secrets"):
-            return None
         # Accept secrets either flat (SUPABASE_URL / SUPABASE_KEY at the top
         # level) or nested under a [supabase] section in secrets.toml.
-        section = st.secrets.get("supabase", {})
-        url = st.secrets.get("SUPABASE_URL") or section.get("SUPABASE_URL")
-        key = st.secrets.get("SUPABASE_KEY") or section.get("SUPABASE_KEY")
+        section = _secret("supabase", {}) or {}
+        url = _secret("SUPABASE_URL") or section.get("SUPABASE_URL")
+        key = _secret("SUPABASE_KEY") or section.get("SUPABASE_KEY")
         if not url or not key:
             return None
         return create_client(url, key)
@@ -1837,7 +2181,7 @@ this all depends on.
             return joblib.load(tmp.name)
 
     # --- Filter which titles get checked ---
-    st.markdown("#### Filter which titles to check")
+    section_label("Filter which titles to check")
     genres_available = sorted({
         g.strip() for sublist in IMDB_Ratings['Genre'].dropna().str.split(',') for g in sublist
     })
@@ -2028,7 +2372,7 @@ this all depends on.
 
         # --- Show results, biggest changes first (nothing hidden by default) ---
         if not new_df.empty:
-            st.subheader("📊 Current Run - Live Ratings Comparison")
+            section_label("📊 Current run — live ratings comparison")
             changed = int((new_df['Rating Difference'] != 0).sum())
 
             display_df = new_df[new_df['Rating Difference'] != 0].copy() if only_show_changed else new_df.copy()
@@ -2040,7 +2384,7 @@ this all depends on.
                 st.dataframe(
                     display_df.sort_values(by='Abs Change', ascending=False)
                     .drop(columns=['Abs Change']).reset_index(drop=True),
-                    use_container_width=True
+                    width="stretch"
                 )
             st.caption(
                 f"{changed} of {len(new_df)} checked titles show a different live rating today than the "
@@ -2074,7 +2418,7 @@ this all depends on.
                 try:
                     model = _load_production_model(current_model_row["storage_path"])
                     predict_df['Predicted Rating'] = model.predict(X_pred)
-                    st.subheader("🤖 Predicted Ratings for Unseen Movies with Changed Ratings")
+                    section_label("🤖 Predicted ratings — unseen films whose rating moved")
                     st.caption(
                         f"Served from the registered production model "
                         f"(validated RMSE {current_model_row['cv_rmse_mean']:.3f}) — "
@@ -2102,7 +2446,7 @@ this all depends on.
                 y_train = train_df['Your Rating']
                 fallback_model.fit(X_train, y_train)
                 predict_df['Predicted Rating'] = fallback_model.predict(X_pred)
-                st.subheader("🤖 Predicted Ratings for Unseen Movies with Changed Ratings")
+                section_label("🤖 Predicted ratings — unseen films whose rating moved")
                 st.caption(
                     "⚠️ No registered production model — this is a temporary model trained "
                     "just for this session, not the validated registry model."
@@ -2112,14 +2456,14 @@ this all depends on.
                 predict_df[['Title','IMDb Rating','Genre','Director','Rating Difference','Predicted Rating']]
                 .sort_values(by='Predicted Rating', ascending=False)
                 .reset_index(drop=True),
-                use_container_width=True
+                width="stretch"
             )
         else:
             st.info("No new movies available for prediction this run.")
 
     # --- Historical trend from Supabase (persists across runs and sessions) ---
     st.markdown("---")
-    st.subheader("📈 Historical Trend")
+    section_label("📈 Historical trend")
     if supabase is None:
         st.caption("Connect Supabase (see notice above) to see rating drift trends across every past run here.")
     else:
@@ -2148,11 +2492,11 @@ this all depends on.
                         hist_df.groupby('Run Date')['rating_diff']
                         .mean().reset_index().sort_values('Run Date')
                     )
-                    st.bar_chart(trend.set_index('Run Date'))
+                    st.bar_chart(trend.set_index('Run Date'), color="#E3A857")
                     st.caption("Average live-vs-static rating difference per run date, oldest to newest.")
 
                 with st.expander("📋 View all logged rows"):
-                    st.dataframe(hist_df.drop(columns=['Run Date']), use_container_width=True, height=300)
+                    st.dataframe(hist_df.drop(columns=['Run Date']), width="stretch", height=300)
             else:
                 st.info("No rows logged yet — click **Run Live Ratings Check** above to start building history.")
         except Exception as e:
@@ -2261,7 +2605,7 @@ if scenario.startswith("9"):
     import re
     import difflib
 
-    st.subheader("🎬 9 – Natural-Language Film Q&A Assistant")
+    scenario_header("9", "Natural-Language Film Q&amp;A Assistant")
 
     st.markdown("""
 This scenario allows you to ask **natural-language questions** about my personal film ratings.
@@ -2272,22 +2616,17 @@ This scenario allows you to ask **natural-language questions** about my personal
 - If nothing specific is recognized, you'll still get your full rated list back, sorted — never a blank page.
 """)
 
-    st.markdown("**Example questions you can ask:**")
-    for q in [
-        "Which Hitchcock films did I rate the highest?",
-        "Top films by Spielberg?",
-        "Which drama films did I rate the lowest?",
-        "Show me films by Cameron"
-    ]:
-        st.write(f"- {q}")
+    st.markdown(
+        "**Example questions you can ask:**\n\n"
+        "- Which Hitchcock films did I rate the highest?\n"
+        "- Top films by Spielberg?\n"
+        "- Which drama films did I rate the lowest?\n"
+        "- Show me films by Cameron"
+    )
 
-    try:
-        My_Ratings = pd.read_excel("myratings.xlsx")
-        IMDB_Ratings = pd.read_excel("imdbratings.xlsx")
-    except Exception as e:
-        st.error(f"Error loading Excel files: {e}")
-        My_Ratings = pd.DataFrame()
-        IMDB_Ratings = pd.DataFrame()
+    # (Both tables are already loaded, vote-filtered and merged at the top of
+    # the file — this scenario used to re-read the raw workbooks here, which
+    # quietly gave it a different dataset to every other scenario.)
 
     # --- Editable logic code ---
     logic_code = textwrap.dedent(r"""
@@ -2384,7 +2723,7 @@ This scenario allows you to ask **natural-language questions** about my personal
 
 # --- Scenario 15: Personalized Watchlist Ranker ---
 if scenario == "15 – Personalized Watchlist Ranker":
-    st.header("15 – Personalized Watchlist Ranker")
+    scenario_header("15", "Personalised Watchlist Ranker")
     st.write("""
     Rank unseen films with your own weighting — drag the sliders and the watchlist reorders live.
     Builds on the same idea as the Hybrid Recommendations scenario, but interactive instead of a fixed formula.
@@ -2428,7 +2767,7 @@ ranked = unseen.sort_values(by='Watchlist Score', ascending=False).head(top_n)
     with st.expander("🛠️ View the underlying code", expanded=False):
         st.text_area(
             "Python code (view only — this box is not wired back into execution)",
-            s15_code_view, height=420, key="s15_code_view",
+            s15_code_view, height=360, key="s15_code_view",
         )
         st.caption("This is a reference copy of the code that actually runs below. Editing this box won't change the output.")
 
@@ -2461,7 +2800,7 @@ ranked = unseen.sort_values(by='Watchlist Score', ascending=False).head(top_n)
         st.dataframe(
             ranked[['Title', 'IMDb Rating', 'Genre', 'Director', 'Year', 'Num Votes', 'Watchlist Score']]
             .round(2).reset_index(drop=True),
-            use_container_width=True
+            width="stretch"
         )
         st.caption(
             f"Boosting directors you've rated 7+: {', '.join(sorted(liked_directors)) if liked_directors else 'none yet'} "
@@ -2471,7 +2810,7 @@ ranked = unseen.sort_values(by='Watchlist Score', ascending=False).head(top_n)
 
 # --- Scenario 16: Similar Films Finder ---
 if scenario == "16 – Similar Films Finder":
-    st.header("16 – Similar Films Finder")
+    scenario_header("16", "Similar Films Finder")
     st.write("""
     Pick a film and find unseen titles with the closest content profile — genre, director,
     era, and popularity — using nearest-neighbor search.
@@ -2544,13 +2883,13 @@ matches['Already Seen'] = matches['Movie ID'].isin(set(My_Ratings['Movie ID']))
                 matches[['Title', 'Genre', 'Director', 'Year', 'IMDb Rating', 'Similarity', 'Already Seen']]
                 .sort_values(by='Similarity', ascending=False)
                 .reset_index(drop=True),
-                use_container_width=True
+                width="stretch"
             )
 
 
 # --- Scenario 17: Taste Profile Radar ---
 if scenario == "17 – Taste Profile Radar":
-    st.header("17 – Taste Profile Radar")
+    scenario_header("17", "Taste Profile Radar")
     st.write("A snapshot of which genres you rate highest and watch the most.")
 
     if My_Ratings.empty:
@@ -2615,13 +2954,15 @@ hi = min(10, max(genre_stats['Avg_Rating']) + 1)
             angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
             angles_closed = angles + angles[:1]
 
-            fig, ax = plt.subplots(figsize=(4.3, 4.3), subplot_kw=dict(polar=True))
+            fig, ax = plt.subplots(figsize=(6.0, 6.0), subplot_kw=dict(polar=True))
             ax.plot(angles_closed, values_closed, color='#E3A857', linewidth=2)
-            ax.fill(angles_closed, values_closed, color='#E3A857', alpha=0.25)
+            ax.fill(angles_closed, values_closed, color='#E3A857', alpha=0.22)
             ax.set_xticks(angles)
-            ax.set_xticklabels(categories, fontsize=7.5)
+            ax.set_xticklabels(categories, fontsize=8)
             ax.set_ylim(lo, hi)
-            ax.tick_params(axis='y', labelsize=6)
+            ax.tick_params(axis='y', labelsize=6.5)
+            ax.spines['polar'].set_color("#2A2F3A")
+            ax.grid(color="#2A2F3A", linewidth=0.7)
 
             for angle, value in zip(angles, values):
                 ax.annotate(
@@ -2631,20 +2972,24 @@ hi = min(10, max(genre_stats['Avg_Rating']) + 1)
 
             fig.tight_layout()
 
-            chart_col, _ = st.columns([1, 1])
+            chart_col, table_col = st.columns([1.15, 1])
             with chart_col:
                 st.pyplot(fig)
-
-            st.caption(
-                f"Axis is zoomed to {lo:.1f}–{hi:.1f} (not 0–10) so the shape reflects real differences "
-                f"between genres, not just how bunched-up your ratings are."
-            )
-            st.dataframe(genre_stats.round(2).reset_index(drop=True), use_container_width=True)
+                st.caption(
+                    f"Axis is zoomed to {lo:.1f}–{hi:.1f} (not 0–10) so the shape reflects real "
+                    f"differences between genres, not just how bunched-up your ratings are."
+                )
+            with table_col:
+                st.dataframe(
+                    genre_stats.round(2).reset_index(drop=True),
+                    width="stretch", height=430,
+                )
+            plt.close(fig)
 
 
 # --- Scenario 18: Prediction Outlier Detector ---
 if scenario == "18 – Prediction Outlier Detector":
-    st.header("18 – Prediction Outlier Detector")
+    scenario_header("18", "Prediction Outlier Detector")
     st.write("""
     Uses out-of-fold predictions to find films where your actual rating surprised the model most —
     the ones that broke your usual genre/director patterns.
@@ -2686,14 +3031,14 @@ if scenario == "18 – Prediction Outlier Detector":
         st.dataframe(
             outliers[['Title', 'Genre', 'Director', 'Your Rating', 'Predicted (out-of-fold)', 'Surprise']]
             .reset_index(drop=True),
-            use_container_width=True
+            width="stretch"
         )
         st.caption("Positive Surprise = you liked it more than your usual pattern predicts. Negative = you liked it less.")
 
 
 # --- Scenario 19: Tonight's Pick Roulette ---
 if scenario == "19 – Tonight's Pick Roulette":
-    st.header("19 – Tonight's Pick Roulette 🎰")
+    scenario_header("19", "Tonight's Pick Roulette 🎰")
     st.write("Can't decide what to watch? Filter by mood, then spin.")
 
     if IMDB_Ratings.empty:
@@ -2730,7 +3075,7 @@ if scenario == "19 – Tonight's Pick Roulette":
 
 # --- Scenario 20: Ratings Timeline by Release Decade ---
 if scenario == "20 – Ratings Timeline by Release Decade":
-    st.header("20 – Ratings Timeline by Release Decade")
+    scenario_header("20", "Ratings Timeline by Release Decade")
     st.write("How does your taste shift across different decades of film?")
 
     if IMDB_Ratings.empty or My_Ratings.empty:
@@ -2756,20 +3101,30 @@ if scenario == "20 – Ratings Timeline by Release Decade":
             st.warning("Not enough data at this threshold — lower the minimum.")
         else:
             chart_df = decade_stats.set_index('Decade Label')[['Avg_My_Rating', 'Avg_IMDb_Rating']]
-            st.bar_chart(chart_df)
+            st.bar_chart(chart_df, color=["#E3A857", "#4FA88F"])
             st.dataframe(
                 decade_stats[['Decade Label', 'Films_Rated', 'Avg_My_Rating', 'Avg_IMDb_Rating']]
                 .rename(columns={'Decade Label': 'Decade'})
                 .round(2).reset_index(drop=True),
-                use_container_width=True
+                width="stretch"
             )
             st.caption("Where your bar rises above IMDb's, you rate that decade more generously than the crowd — and vice versa.")
 
             st.markdown("---")
-            st.subheader("🔍 Drill into a decade")
+            section_label("🔍 Drill into a decade")
             decade_choice = st.selectbox("Pick a decade", decade_stats['Decade Label'].tolist())
             decade_films = compare[compare['Decade Label'] == decade_choice].sort_values('Your Rating', ascending=False)
             st.dataframe(
                 decade_films[['Title', 'Your Rating', 'IMDb Rating', 'Genre', 'Director']].reset_index(drop=True),
-                use_container_width=True
+                width="stretch"
             )
+
+
+# --- Footer ---
+st.markdown(
+    '<div class="app-footer">'
+    '<span>IMDb Data &amp; AI Playground — built with Streamlit, pandas, scikit-learn and the OMDb API.</span>'
+    '<span>Ratings data: my own IMDb export · Films with more than {:,} votes only</span>'
+    '</div>'.format(MIN_VOTES),
+    unsafe_allow_html=True,
+)
