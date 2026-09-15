@@ -38,6 +38,11 @@ from sklearn.neighbors import NearestNeighbors
 
 
 
+# Bump this whenever the file changes — it's rendered in the footer, so you can
+# tell at a glance whether Streamlit Cloud is actually serving the latest commit
+# or still running a previous deploy.
+APP_BUILD = "2026-09-15c"
+
 # --- Page Config ---
 st.set_page_config(
     layout="wide",
@@ -2340,17 +2345,40 @@ this all depends on.
         # --- Persist this run: Supabase if connected, otherwise a local CSV fallback ---
         if not new_df.empty:
             if supabase is not None:
+                # pandas widens integer columns to float as soon as a merge
+                # introduces a NaN, so "Num Votes" arrives here as 1075386.0 —
+                # which Postgres rejects for a bigint column. Everything numeric
+                # is coerced back to a plain Python int/float (never numpy
+                # types, which aren't JSON-serialisable) before it's sent.
+                # Deliberately tolerant: handles numpy scalars, strings like
+                # "1075386.0", None and NaN alike.
+                def _as_int(value):
+                    try:
+                        if value is None or pd.isna(value):
+                            return None
+                        return int(round(float(value)))
+                    except (TypeError, ValueError):
+                        return None
+
+                def _as_float(value):
+                    try:
+                        if value is None or pd.isna(value):
+                            return None
+                        return float(value)
+                    except (TypeError, ValueError):
+                        return None
+
                 records = [
                     {
                         "movie_id": r["Movie ID"],
                         "title": r["Title"],
-                        "imdb_rating_static": r["IMDb Rating (Static)"],
-                        "imdb_rating_live": r["IMDb Rating (Live)"],
-                        "rating_diff": r["Rating Difference"],
+                        "imdb_rating_static": _as_float(r["IMDb Rating (Static)"]),
+                        "imdb_rating_live": _as_float(r["IMDb Rating (Live)"]),
+                        "rating_diff": _as_float(r["Rating Difference"]),
                         "genre": r["Genre"],
                         "director": r["Director"],
-                        "year": int(r["Year"]) if pd.notna(r["Year"]) else None,
-                        "num_votes": r["Num Votes"],
+                        "year": _as_int(r["Year"]),
+                        "num_votes": _as_int(r["Num Votes"]),
                         "language": r["Language"],
                         "checked_at": r["CheckedAt"],
                     }
@@ -2361,6 +2389,16 @@ this all depends on.
                     st.caption(f"💾 Logged {len(records)} row(s) to Supabase (`films` table).")
                 except Exception as e:
                     st.warning(f"Couldn't write to Supabase (`films` table): {e}")
+                    # Show exactly what was sent — a type mismatch here is
+                    # otherwise guesswork against Postgres's error message.
+                    if records:
+                        st.caption(
+                            "First row sent: "
+                            + ", ".join(
+                                f"{k}={v!r} ({type(v).__name__})"
+                                for k, v in records[0].items()
+                            )
+                        )
             else:
                 if os.path.exists(history_file):
                     history_df = pd.read_csv(history_file)
@@ -3124,7 +3162,8 @@ if scenario == "20 – Ratings Timeline by Release Decade":
 st.markdown(
     '<div class="app-footer">'
     '<span>IMDb Data &amp; AI Playground — built with Streamlit, pandas, scikit-learn and the OMDb API.</span>'
-    '<span>Ratings data: my own IMDb export · Films with more than {:,} votes only</span>'
-    '</div>'.format(MIN_VOTES),
+    '<span>Ratings data: my own IMDb export · Films with more than {:,} votes only · '
+    'Build {}</span>'
+    '</div>'.format(MIN_VOTES, APP_BUILD),
     unsafe_allow_html=True,
 )
