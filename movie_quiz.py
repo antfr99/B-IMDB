@@ -130,27 +130,68 @@ highly-rated films you haven't seen yet from a curated catalog
 
 df = load_ratings(uploaded.getvalue())
 
-# ── Sidebar filters ───────────────────────────────────────────────────────────
-st.sidebar.header("Filters")
+# ── Sidebar filters (apply to YOUR RATINGS) ───────────────────────────────────
+st.sidebar.header("Filter my ratings")
+
 movies_only = st.sidebar.checkbox("Movies only (exclude TV)", value=True,
     help="Your export may include TV episodes and series. Catalog is movies only.")
 if movies_only and "Title Type" in df.columns:
     df = df[df["Title Type"].astype(str).str.contains("movie", case=False, na=False)]
 
+# Title search
+title_q = st.sidebar.text_input("Title contains")
+if title_q and "Title" in df.columns:
+    df = df[df["Title"].astype(str).str.contains(title_q, case=False, na=False)]
+
+# Year range
 if "Year" in df.columns and df["Year"].notna().any():
     ylo, yhi = int(df["Year"].min()), int(df["Year"].max())
     if ylo < yhi:
         yr = st.sidebar.slider("Release year", ylo, yhi, (ylo, yhi))
-        df = df[df["Year"].between(*yr)]
+        df = df[df["Year"].between(*yr) | df["Year"].isna()]
+
+# Runtime range (minutes)
+if "Runtime (mins)" in df.columns and df["Runtime (mins)"].notna().any():
+    rlo, rhi = int(df["Runtime (mins)"].min()), int(df["Runtime (mins)"].max())
+    if rlo < rhi:
+        rt = st.sidebar.slider("Runtime (minutes)", rlo, rhi, (rlo, rhi))
+        df = df[df["Runtime (mins)"].between(*rt) | df["Runtime (mins)"].isna()]
+
+# IMDb rating range
+if "IMDb Rating" in df.columns and df["IMDb Rating"].notna().any():
+    ir = st.sidebar.slider("IMDb rating", 0.0, 10.0,
+        (float(round(df["IMDb Rating"].min(),1)), 10.0), 0.1)
+    df = df[df["IMDb Rating"].between(*ir) | df["IMDb Rating"].isna()]
+
+# Your rating range
+if "Your Rating" in df.columns and df["Your Rating"].notna().any():
+    yrr = st.sidebar.slider("Your rating", 1, 10,
+        (int(df["Your Rating"].min()), 10))
+    df = df[df["Your Rating"].between(*yrr) | df["Your Rating"].isna()]
+
+# Votes minimum
+if "Num Votes" in df.columns and df["Num Votes"].notna().any():
+    vmax = int(df["Num Votes"].max())
+    vmin = st.sidebar.slider("Minimum IMDb votes", 0, vmax, 0, step=max(1, vmax//100))
+    df = df[df["Num Votes"].fillna(0) >= vmin]
 
 # Genre filter (multiselect)
 if "Genres" in df.columns:
     genre_opts = sorted(split_multi(df["Genres"]).unique().tolist())
-    picked_genres = st.sidebar.multiselect("Filter by genre(s)", genre_opts,
+    picked_genres = st.sidebar.multiselect("Genre(s)", genre_opts,
         help="Leave empty for all genres.")
     if picked_genres:
         pat = "|".join(picked_genres)
         df = df[df["Genres"].astype(str).str.contains(pat, case=False, na=False)]
+
+# Director filter (multiselect)
+if "Directors" in df.columns:
+    dir_opts = (split_multi(df["Directors"]).value_counts().index.tolist())
+    picked_dirs = st.sidebar.multiselect("Director(s)", dir_opts,
+        help="Leave empty for all directors.")
+    if picked_dirs:
+        pat = "|".join(picked_dirs)
+        df = df[df["Directors"].astype(str).str.contains(pat, case=False, na=False)]
 
 if df.empty:
     st.warning("No ratings left after filters. Loosen the filters in the sidebar.")
@@ -346,16 +387,59 @@ with t6:
     else:
         seen = set(df["Const"].dropna().astype(str))
         unseen = catalog[~catalog["movie_id"].astype(str).isin(seen)].copy()
-        # genre filter within discover
-        if "genre" in unseen.columns:
-            gopts = sorted(split_multi(unseen["genre"]).unique().tolist())
-            gpick = st.multiselect("Filter by genre", gopts, key="disc_g")
-            if gpick:
-                pat = "|".join(gpick)
-                unseen = unseen[unseen["genre"].astype(str).str.contains(pat, case=False, na=False)]
-        if "rating" in unseen.columns:
-            minr = st.slider("Minimum IMDb rating", 6.8, 9.5, 7.5, 0.1, key="disc_r")
-            unseen = unseen[unseen["rating"] >= minr]
+
+        st.caption("Filters below apply to the catalog (imdb_movies.csv).")
+        f1, f2, f3 = st.columns(3)
+
+        # Title
+        with f1:
+            dtitle = st.text_input("Title contains", key="disc_title")
+        if dtitle and "title" in unseen.columns:
+            unseen = unseen[unseen["title"].astype(str).str.contains(dtitle, case=False, na=False)]
+
+        # Genre + Director multiselects
+        with f2:
+            if "genre" in unseen.columns:
+                gopts = sorted(split_multi(unseen["genre"]).unique().tolist())
+                gpick = st.multiselect("Genre(s)", gopts, key="disc_g")
+                if gpick:
+                    pat = "|".join(gpick)
+                    unseen = unseen[unseen["genre"].astype(str).str.contains(pat, case=False, na=False)]
+        with f3:
+            if "director" in unseen.columns:
+                dopts = split_multi(unseen["director"]).value_counts().index.tolist()
+                dpick = st.multiselect("Director(s)", dopts, key="disc_d")
+                if dpick:
+                    pat = "|".join(dpick)
+                    unseen = unseen[unseen["director"].astype(str).str.contains(pat, case=False, na=False)]
+
+        r1, r2, r3 = st.columns(3)
+        # Year range
+        with r1:
+            if "year" in unseen.columns and unseen["year"].notna().any():
+                ylo, yhi = int(unseen["year"].min()), int(unseen["year"].max())
+                if ylo < yhi:
+                    dyr = st.slider("Year", ylo, yhi, (ylo, yhi), key="disc_year")
+                    unseen = unseen[unseen["year"].between(*dyr)]
+        # Runtime range
+        with r2:
+            if "runtime" in unseen.columns and unseen["runtime"].notna().any():
+                rlo, rhi = int(unseen["runtime"].min()), int(unseen["runtime"].max())
+                if rlo < rhi:
+                    drt = st.slider("Runtime (mins)", rlo, rhi, (rlo, rhi), key="disc_rt")
+                    unseen = unseen[unseen["runtime"].between(*drt) | unseen["runtime"].isna()]
+        # Rating range
+        with r3:
+            if "rating" in unseen.columns:
+                minr = st.slider("IMDb rating", 6.8, 10.0, (7.5, 10.0), 0.1, key="disc_r")
+                unseen = unseen[unseen["rating"].between(*minr)]
+
+        # Votes minimum
+        if "votes" in unseen.columns and unseen["votes"].notna().any():
+            vmax = int(unseen["votes"].max())
+            vmin = st.slider("Minimum votes", 0, vmax, 0, step=max(1, vmax//100), key="disc_v")
+            unseen = unseen[unseen["votes"].fillna(0) >= vmin]
+
         st.write(f"🍿 {len(unseen):,} films in the catalog you haven't rated yet.")
         show_cols = [c for c in ["title","year","rating","votes","genre","director","movie_url"]
                      if c in unseen.columns]
