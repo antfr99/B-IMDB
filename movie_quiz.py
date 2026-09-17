@@ -129,6 +129,10 @@ highly-rated films you haven't seen yet from a curated catalog
     st.stop()
 
 df = load_ratings(uploaded.getvalue())
+# Keep every ID you have rated BEFORE any sidebar filter touches df —
+# Discover must exclude all of them, not just the ones currently filtered in.
+rated_ids = (set(df["Const"].dropna().astype(str).str.strip().str.lower())
+             if "Const" in df.columns else set())
 
 # ── Sidebar filters (apply to YOUR RATINGS) ───────────────────────────────────
 st.sidebar.header("Filter my ratings")
@@ -382,11 +386,11 @@ with t6:
     if catalog.empty:
         st.info("The reference catalog couldn't be loaded from GitHub, so Discover is unavailable. "
                 "Check that imdb_movies.csv exists in your repo.")
-    elif "Const" not in df.columns or "movie_id" not in catalog.columns:
+    elif not rated_ids or "movie_id" not in catalog.columns:
         st.info("Can't match your ratings to the catalog (missing ID columns).")
     else:
-        seen = set(df["Const"].dropna().astype(str))
-        unseen = catalog[~catalog["movie_id"].astype(str).isin(seen)].copy()
+        cat_ids = catalog["movie_id"].astype(str).str.strip().str.lower()
+        unseen = catalog[~cat_ids.isin(rated_ids)].copy()
 
         st.caption("Filters below apply to the catalog (imdb_movies.csv).")
         f1, f2, f3 = st.columns(3)
