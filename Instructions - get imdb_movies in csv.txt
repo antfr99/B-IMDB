@@ -1,10 +1,10 @@
 https://datasets.imdbws.com/
 
-add note in github that cluade ( in my cmd  ) downloaded from above ( where all movies reside ) to csv :
+Claude ( in my cmd  ) downloaded from above site ( where all movies reside ) to csv the belwo columns 
 
 Movie ID | Title | Year | Runtime | Rating | Votes | Genre | Director | Movie URL
 
-It defaults to:
+Defaults:
 
     Movies only
     1950 onward
