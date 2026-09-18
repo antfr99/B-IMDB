@@ -107,7 +107,7 @@ The <code>imdb_movies.csv</code> catalog (loaded from GitHub) is used for the
 catalog = load_catalog()
 
 if uploaded is None:
-    st.title("My IMDb ratings")
+    st.title("My IMDb Ratings")
     st.markdown("""
 <div class="info-box">
 <span class="badge">GET STARTED</span><br><br>
