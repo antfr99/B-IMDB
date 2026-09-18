@@ -1,0 +1,14 @@
+https://datasets.imdbws.com/
+
+add note in github that cluade ( in my cmd  ) downloaded from above ( where all movies reside ) to csv :
+
+Movie ID | Title | Year | Runtime | Rating | Votes | Genre | Director | Movie URL
+
+It defaults to:
+
+    Movies only
+    1950 onward
+    IMDb rating > 6.8
+    Excludes adult titles
+    Adds director names
+    Adds IMDb URL
